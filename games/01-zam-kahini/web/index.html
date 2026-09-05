@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#14121a">
+<title>Zam Kâhini</title>
+
+</head>
+<body>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Archivo:wght@400;600&family=IBM+Plex+Mono:wght@500;700&display=swap">
+<style>
+:root{--ink:#14121a;--panel:#1d1a26;--panel2:#26222f;--paper:#f4efe4;--signal:#ffb020;--hazard:#ff3d5f;--ok:#5fe3b0;--warn:#ffd166;--orange:#ff8a3d;--muted:#a9a3b8;--line:#3a3547;
+--disp:"Big Shoulders Display","Archivo Narrow",Impact,sans-serif;--body:Archivo,"Helvetica Neue",Arial,sans-serif;--mono:"IBM Plex Mono",Menlo,Consolas,monospace}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ink);color:var(--paper);font-family:var(--body);min-height:100%}
+body{display:flex;justify-content:center}
+#app{width:100%;max-width:480px;min-height:100dvh;display:flex;flex-direction:column;padding:12px 14px 20px;gap:12px}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.brand{font-family:var(--disp);font-weight:900;font-size:26px;letter-spacing:.02em;text-transform:uppercase;color:var(--signal);line-height:1}
+.brand small{display:block;font-family:var(--body);font-weight:600;font-size:11px;letter-spacing:.14em;color:var(--muted);margin-top:4px}
+.streak{font-family:var(--mono);font-size:13px;color:var(--muted);text-align:right;line-height:1.3}
+.streak b{color:var(--paper);font-size:16px}
+.progress{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.progress i{height:8px;background:var(--panel2);border:1px solid var(--line)}
+.progress i.g{background:var(--ok);border-color:var(--ok)}.progress i.y{background:var(--warn);border-color:var(--warn)}.progress i.o{background:var(--orange);border-color:var(--orange)}.progress i.r{background:var(--hazard);border-color:var(--hazard)}.progress i.cur{border-color:var(--signal)}
+/* etiket */
+.tag{position:relative;background:var(--paper);color:var(--ink);padding:18px 18px 16px;clip-path:polygon(0 0,100% 0,100% 100%,0 100%);border-top:10px solid var(--signal)}
+.tag:after{content:"";position:absolute;left:0;right:0;bottom:-8px;height:8px;background:repeating-linear-gradient(90deg,var(--paper) 0 10px,transparent 10px 16px)}
+.tag .cat{font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:600;color:#6b6478;display:flex;justify-content:space-between}
+.tag .name{font-family:var(--disp);font-weight:900;font-size:clamp(40px,12vw,58px);line-height:.95;text-transform:uppercase;margin:6px 0 2px;text-wrap:balance}
+.tag .unit{font-size:14px;color:#6b6478;font-weight:600}
+.tag .q{margin-top:14px;display:flex;align-items:baseline;gap:10px;font-family:var(--mono);font-weight:700}
+.tag .q .yr{font-size:20px;color:#6b6478}
+.tag .q .val{font-size:clamp(38px,11vw,54px);font-variant-numeric:tabular-nums;letter-spacing:-.02em;min-width:5ch}
+.tag .q .val.spin{color:#6b6478}
+.tag .q .cur{font-size:22px}
+.tag .today{margin-top:6px;font-size:13px;color:#6b6478}
+.tag .today b{font-family:var(--mono);color:var(--ink)}
+/* slider */
+.ctl{background:var(--panel);border:1px solid var(--line);padding:14px 16px 16px;display:flex;flex-direction:column;gap:12px}
+.ctl label{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:var(--muted);display:flex;justify-content:space-between}
+input[type=range]{width:100%;appearance:none;height:34px;background:transparent;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:6px;background:linear-gradient(90deg,var(--line),var(--signal));border-radius:0}
+input[type=range]::-webkit-slider-thumb{appearance:none;width:34px;height:34px;margin-top:-14px;background:var(--signal);border:3px solid var(--ink);box-shadow:0 0 0 2px var(--signal)}
+input[type=range]::-moz-range-track{height:6px;background:linear-gradient(90deg,var(--line),var(--signal))}
+input[type=range]::-moz-range-thumb{width:30px;height:30px;background:var(--signal);border:3px solid var(--ink);border-radius:0}
+.scale{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--muted)}
+button{font-family:var(--disp);font-weight:900;font-size:24px;letter-spacing:.06em;text-transform:uppercase;background:var(--signal);color:var(--ink);border:0;padding:14px;cursor:pointer;transition:transform .08s}
+button:active{transform:scale(.96)}
+button.ghost{background:transparent;color:var(--paper);border:1px solid var(--line);font-size:18px}
+button:focus-visible{outline:3px solid var(--ok);outline-offset:2px}
+/* result of a round */
+.verdict{display:none;background:var(--panel);border:1px solid var(--line);padding:14px 16px;gap:8px;flex-direction:column}
+.verdict.on{display:flex}
+.verdict .row{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:14px}
+.verdict .row b{font-size:22px;font-variant-numeric:tabular-nums}
+.verdict .dev{font-family:var(--disp);font-weight:900;font-size:40px;line-height:1;text-transform:uppercase}
+.verdict .fact{font-size:13px;color:var(--muted);line-height:1.45}
+.verdict .fact b{color:var(--paper)}
+.g{color:var(--ok)}.y{color:var(--warn)}.o{color:var(--orange)}.r{color:var(--hazard)}
+/* end */
+.end{display:none;flex-direction:column;gap:12px}
+.end.on{display:flex}
+.card{background:var(--panel);border:1px solid var(--line);padding:18px 16px;display:flex;flex-direction:column;gap:8px;transform:translateY(12px);opacity:0;animation:up .4s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes up{to{transform:none;opacity:1}}
+.card .k{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.card .year{font-family:var(--disp);font-weight:900;font-size:clamp(72px,26vw,120px);line-height:.9;color:var(--signal);font-variant-numeric:tabular-nums}
+.card .label{font-family:var(--disp);font-weight:700;font-size:28px;line-height:1.05;text-transform:uppercase}
+.card .grid{font-size:28px;letter-spacing:.08em}
+.card .stat{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.card .stat b{color:var(--paper)}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;opacity:0;animation:up .3s .4s forwards}
+.acts button{font-size:20px}
+.preview{display:none;justify-content:center}
+.preview.on{display:flex}
+.preview img{width:60%;border:1px solid var(--line)}
+.hint{font-size:12px;color:var(--muted);text-align:center;line-height:1.4}
+footer{margin-top:auto;font-size:11px;color:var(--muted);line-height:1.5;border-top:1px solid var(--line);padding-top:10px}
+footer b{color:var(--warn)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ok);color:var(--ink);font-weight:600;padding:10px 16px;opacity:0;transition:.2s;pointer-events:none;font-size:14px}
+.toast.on{opacity:1;transform:translateX(-50%)}
+.shake{animation:shk .4s}
+@keyframes shk{0%,100%{transform:none}20%{transform:translate(-6px,2px) rotate(-1deg)}40%{transform:translate(6px,-2px) rotate(1deg)}60%{transform:translate(-4px,1px)}80%{transform:translate(4px,-1px)}}
+.flash{animation:fl .09s}
+@keyframes fl{0%{box-shadow:inset 0 0 0 200px rgba(255,61,95,.55)}100%{box-shadow:none}}
+.pop{animation:pop .6s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pop{0%{transform:scale(.6);opacity:0}20%{transform:scale(1.15);opacity:1}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.shake,.pop,.card,.acts{animation:none;opacity:1;transform:none}}
+</style>
+<div id="app">
+  <header>
+    <div class="brand">Zam Kâhini<small id="dayLabel">#1 · 05.09.2026</small></div>
+    <div class="streak"><b id="streak">0</b> gün seri<br><span id="career">sezgi: —</span></div>
+  </header>
+  <div class="progress" id="prog"></div>
+
+  <section id="round">
+    <div class="tag" id="tag">
+      <div class="cat"><span id="cat">GIDA</span><span id="idx">1 / 6</span></div>
+      <div class="name" id="name">Ekmek</div>
+      <div class="unit" id="unit">250 g</div>
+      <div class="q"><span class="yr">2019</span><span class="val spin" id="val">?</span><span class="cur">₺</span></div>
+      <div class="today" id="today"></div>
+    </div>
+    <div style="height:10px"></div>
+    <div class="ctl" id="ctl">
+      <label><span>Tahminin</span><span class="mono" id="guessLbl">—</span></label>
+      <input type="range" id="slider" min="0" max="1000" value="500" aria-label="2019 fiyat tahmini">
+      <div class="scale"><span>0,50 ₺</span><span>10 ₺</span><span>500 ₺</span><span>100.000 ₺</span></div>
+      <button id="go">Bul</button>
+    </div>
+    <div class="verdict" id="verdict">
+      <div class="row"><span>Gerçek 2019</span><b id="real">—</b></div>
+      <div class="row"><span>Senin tahminin</span><b id="mine">—</b></div>
+      <div class="dev" id="dev">—</div>
+      <div class="fact" id="fact"></div>
+      <button id="next" class="ghost">Sonraki</button>
+    </div>
+  </section>
+
+  <section class="end" id="end">
+    <div class="card">
+      <div class="k">Cüzdan yılın</div>
+      <div class="year" id="year">2021</div>
+      <div class="label" id="ylabel">Sen 2021'de kaldın.</div>
+      <div class="grid" id="grid">🟩🟨🟥🟩🟧🟩</div>
+      <div class="stat" id="stat">Ortalama sapma <b>%42</b> · Seri <b>3</b></div>
+    </div>
+    <div class="acts">
+      <button id="share">Paylaş</button>
+      <button id="cardBtn" class="ghost">Kart</button>
+    </div>
+    <div class="preview" id="preview"><img id="cardImg" alt="Paylaşım kartı"></div>
+    <div class="hint" id="endHint">Yarın yeni sepet. Dünkü sepet arşive kalkar, seriye girmez.</div>
+  </section>
+
+  <footer><b>Veri taslak.</b> Fiyatlar 2019 ve 2025 için yaklaşık piyasa değerleridir; kaynak doğrulaması bekliyor (K2/K3). Oyun yorum yapmaz, yalnızca sayı gösterir. <span id="seedInfo"></span></footer>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+(function(){
+"use strict";
+// ---------- VERİ (taslak; her kayıt kaynak alanı doğrulanacak) ----------
+// f19: 2019 ortalama ₺ · f25: 2025 ortalama ₺ · not: kart altı bilgi
+const ITEMS=[
+ {id:"ekmek",ad:"Ekmek",birim:"250 g",cat:"GIDA",f19:1.25,f25:12,not:"2019'da asgari ücretle günde ~1.600 ekmek alınıyordu."},
+ {id:"simit",ad:"Simit",birim:"1 adet",cat:"GIDA",f19:1.5,f25:15,not:"Simit, İstanbul'un resmi olmayan enflasyon endeksidir."},
+ {id:"cay",ad:"Çay",birim:"1 bardak, kahvehane",cat:"HİZMET",f19:1.5,f25:15,not:"Bardak çay, 6 yılda 10 katına çıktı."},
+ {id:"sut",ad:"Süt",birim:"1 litre",cat:"GIDA",f19:4,f25:45,not:"Süt fiyatı yem maliyetiyle birlikte yürür."},
+ {id:"yumurta",ad:"Yumurta",birim:"30'lu koli",cat:"GIDA",f19:15,f25:160,not:"Kolinin fiyatı 2019'da bir sinema biletinden azdı."},
+ {id:"kiyma",ad:"Kıyma",birim:"1 kg",cat:"GIDA",f19:48,f25:700,not:"Kırmızı et, sepetin en hızlı kalemlerinden."},
+ {id:"tavuk",ad:"Tavuk",birim:"1 kg bütün",cat:"GIDA",f19:13,f25:140,not:"Tavuk, etin 'ucuz' alternatifiydi."},
+ {id:"yag",ad:"Ayçiçek Yağı",birim:"1 litre",cat:"GIDA",f19:12,f25:120,not:"2021 sonunda yağ kuyrukları haber oldu."},
+ {id:"peynir",ad:"Beyaz Peynir",birim:"1 kg",cat:"GIDA",f19:30,f25:350,not:"Kahvaltının en pahalı kalemi."},
+ {id:"benzin",ad:"Benzin",birim:"1 litre",cat:"ULAŞIM",f19:6.5,f25:48,not:"Litre benzin 2019'da bir simit + çaydan biraz fazlaydı."},
+ {id:"otobus",ad:"Toplu Taşıma",birim:"İstanbul tam bilet",cat:"ULAŞIM",f19:2.6,f25:27,not:"Tam bilet 6 yılda 10 kat arttı."},
+ {id:"taksi",ad:"Taksi Açılış",birim:"İstanbul",cat:"ULAŞIM",f19:5,f25:42,not:"Taksi açılış ücreti 2019'da bir bardak çayın 3 katıydı."},
+ {id:"sehirlerarasi",ad:"Otobüs Bileti",birim:"İstanbul – Ankara",cat:"ULAŞIM",f19:90,f25:1200,not:"Şehirlerarası bilet, asgari ücretin %4'ünden %5'ine çıktı."},
+ {id:"kira",ad:"Kira",birim:"İstanbul ortalama, aylık",cat:"BARINMA",f19:1700,f25:25000,not:"Kira, asgari ücretin %85'inden %113'üne çıktı."},
+ {id:"tup",ad:"Mutfak Tüpü",birim:"12 kg",cat:"ENERJİ",f19:95,f25:900,not:"Tüp fiyatı döviz ve petrolle birlikte gider."},
+ {id:"elektrik",ad:"Elektrik",birim:"1 kWh mesken",cat:"ENERJİ",f19:0.55,f25:2.6,not:"Kademeli tarife 2022'de geldi."},
+ {id:"su",ad:"Su",birim:"0,5 litre, bakkal",cat:"GIDA",f19:1,f25:12,not:"Yarım litre su 2019'da 1 liraydı."},
+ {id:"doner",ad:"Döner",birim:"1 porsiyon",cat:"HİZMET",f19:12,f25:220,not:"Döner porsiyonu 2019'da benzinin 2 litresine eşitti."},
+ {id:"kahve",ad:"Zincir Kahve",birim:"Orta boy latte",cat:"HİZMET",f19:14,f25:150,not:"Latte fiyatı 10 kat arttı; tüketim azalmadı."},
+ {id:"sinema",ad:"Sinema Bileti",birim:"Hafta içi, tam",cat:"HİZMET",f19:22,f25:250,not:"Bilet artışı seyirci sayısını yarıya indirdi."},
+ {id:"sigara",ad:"Sigara",birim:"1 paket",cat:"HİZMET",f19:16,f25:95,not:"ÖTV zamları yılda 2–3 kez gelir."},
+ {id:"asgari",ad:"Asgari Ücret",birim:"Net, aylık",cat:"GELİR",f19:2020,f25:22104,not:"Asgari ücret 2019'da 2.020 ₺ netti."},
+ {id:"dolar",ad:"Dolar",birim:"1 USD",cat:"GELİR",f19:5.7,f25:38,not:"Kur 2019'da 5,7 ₺ civarındaydı."},
+ {id:"telefon",ad:"Amiral Telefon",birim:"Yeni çıkan model",cat:"GİYİM-TEKNO",f19:6500,f25:70000,not:"Amiral telefon 2019'da 3 asgari ücretti, 2025'te 3'ten fazla."},
+ {id:"ayakkabi",ad:"Spor Ayakkabı",birim:"Marka, orta segment",cat:"GİYİM-TEKNO",f19:350,f25:4000,not:"Giyim, sepetin görece yavaş kalemidir."},
+ {id:"jean",ad:"Kot Pantolon",birim:"Marka, standart",cat:"GİYİM-TEKNO",f19:150,f25:1500,not:"Kot fiyatı 10 kat arttı."},
+ {id:"pirinc",ad:"Pirinç",birim:"1 kg",cat:"GIDA",f19:9,f25:80,not:"Pirinç, kuru gıdanın sakin kalemi."},
+ {id:"internet",ad:"Ev İnterneti",birim:"Aylık, fiber",cat:"ENERJİ",f19:70,f25:550,not:"İnternet zamları enflasyonun gerisinde kaldı."},
+ {id:"berber",ad:"Berber",birim:"Erkek saç kesimi",cat:"HİZMET",f19:30,f25:350,not:"Hizmet fiyatları ücretle birlikte yürür."},
+ {id:"kitap",ad:"Roman",birim:"Standart baskı",cat:"GİYİM-TEKNO",f19:25,f25:250,not:"Kâğıt ithal, kitap dövizli."}
+];
+// TÜFE kümülatif çarpanları, 2019 sonu = 1 (yıllık TÜİK: 2020 %14,6 · 2021 %36,1 · 2022 %64,3 · 2023 %64,8 · 2024 %44,4 · 2025 ~%31 tahmin)
+const CPI=[["2019",1],["2020",1.146],["2021",1.56],["2022",2.56],["2023",4.22],["2024",6.09],["2025",7.98]];
+const CATS=["GIDA","ULAŞIM","BARINMA","ENERJİ","HİZMET","GELİR","GİYİM-TEKNO"];
+const EPOCH=Date.UTC(2026,8,5);
+// ---------- yardımcılar ----------
+const $=id=>document.getElementById(id);
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+function fmt(n){return n>=100?Math.round(n).toLocaleString("tr-TR"):n>=10?n.toLocaleString("tr-TR",{maximumFractionDigits:1}):n.toLocaleString("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2});}
+function rng(seed){let s=seed>>>0;return()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
+function pad(n){return String(n).padStart(2,"0")}
+function dayKey(d){return d.getUTCFullYear()+"-"+pad(d.getUTCMonth()+1)+"-"+pad(d.getUTCDate())}
+// log slider: 0.5 .. 100000
+const LMIN=Math.log(0.5),LMAX=Math.log(100000);
+const sliderToVal=v=>Math.exp(LMIN+(LMAX-LMIN)*v/1000);
+const valToSlider=x=>Math.round((Math.log(x)-LMIN)/(LMAX-LMIN)*1000);
+// ---------- gün ve sepet ----------
+const params=new URLSearchParams(location.search);
+let day=new Date(); if(params.get("s")&&/^\d{4}-\d{2}-\d{2}$/.test(params.get("s"))){const p=params.get("s").split("-");day=new Date(Date.UTC(+p[0],+p[1]-1,+p[2]));}
+const key=dayKey(day);
+const dayNo=Math.floor((Date.UTC(day.getUTCFullYear(),day.getUTCMonth(),day.getUTCDate())-EPOCH)/864e5)+1;
+const isToday=key===dayKey(new Date());
+function basket(k){const seed=parseInt(k.replace(/-/g,""),10);const r=rng(seed);const cats=CATS.slice().sort(()=>r()-.5).slice(0,6);return cats.map(c=>{const pool=ITEMS.filter(i=>i.cat===c);return pool[Math.floor(r()*pool.length)];});}
+const B=basket(key);
+$("dayLabel").textContent="#"+dayNo+" · "+key.split("-").reverse().join(".")+(isToday?"":" · arşiv");
+$("seedInfo").textContent="Tohum: "+key;
+// ---------- kalıcı durum ----------
+const LS="zk1";let st={};try{st=JSON.parse(localStorage.getItem(LS)||"{}")}catch(e){}
+st.days=st.days||{};st.streak=st.streak||0;st.last=st.last||null;st.devs=st.devs||[];
+function save(){try{localStorage.setItem(LS,JSON.stringify(st))}catch(e){}}
+function paintHead(){$("streak").textContent=st.streak;const d=st.devs;$("career").textContent=d.length?"sezgi: %"+Math.round(d.reduce((a,b)=>a+b,0)/d.length)+" sapma":"sezgi: —";}
+paintHead();
+// ---------- tur ----------
+let i=0,results=[];const done=st.days[key];
+if(done){results=done.results;i=6;}
+function bucket(dev){return dev<=10?"g":dev<=30?"y":dev<=60?"o":"r"}
+const EMO={g:"🟩",y:"🟨",o:"🟧",r:"🟥"};
+function paintProg(){$("prog").innerHTML=B.map((_,k)=>`<i class="${results[k]?bucket(results[k].dev):""}${k===i?" cur":""}"></i>`).join("")}
+let spinT=null;
+function show(){
+  const it=B[i];paintProg();
+  $("cat").textContent=it.cat;$("idx").textContent=(i+1)+" / 6";$("name").textContent=it.ad;$("unit").textContent=it.birim;
+  $("today").innerHTML="";
+  $("verdict").classList.remove("on");$("ctl").style.display="";
+  const v=$("val");v.classList.add("spin");
+  // dönen sayı: presuasion açıcı — cevap yerine soru
+  clearInterval(spinT);let t=0;spinT=setInterval(()=>{t++;v.textContent=fmt(Math.exp(LMIN+Math.random()*(LMAX-LMIN)));if(reduce&&t>1){clearInterval(spinT);v.textContent="?"}},90);
+  $("slider").value=valToSlider(Math.max(0.5,it.f25/5));onSlide();
+}
+function onSlide(){$("guessLbl").textContent=fmt(sliderToVal(+$("slider").value))+" ₺"}
+$("slider").addEventListener("input",onSlide);
+$("go").addEventListener("click",()=>{
+  const it=B[i];const g=sliderToVal(+$("slider").value);const dev=Math.round(Math.abs(g-it.f19)/it.f19*100);
+  results[i]={id:it.id,g:+g.toFixed(2),dev,ratio:g/it.f19};
+  clearInterval(spinT);$("ctl").style.display="none";
+  const v=$("val");v.classList.remove("spin");
+  // hit-stop: 60 ms donma, sonra sayarak gel
+  const b=bucket(dev);
+  setTimeout(()=>{countTo(v,it.f19,700);
+    if(b==="r"){$("tag").classList.add("flash");$("app").classList.add("shake");setTimeout(()=>{$("tag").classList.remove("flash");$("app").classList.remove("shake")},450);}
+  },60);
+  $("today").innerHTML=`Bugün (2025 ort.) <b>${fmt(it.f25)} ₺</b> · ${(it.f25/it.f19).toFixed(1)}× arttı`;
+  $("real").textContent=fmt(it.f19)+" ₺";$("mine").textContent=fmt(g)+" ₺";
+  const dv=$("dev");dv.className="dev "+b;dv.textContent=(g>it.f19?"+":"−")+"%"+dev+(b==="g"?" · İsabet":b==="y"?" · Yakın":b==="o"?" · Uzak":" · Başka gezegen");
+  dv.classList.remove("pop");void dv.offsetWidth;dv.classList.add("pop");
+  const q19=2020/it.f19,q25=22104/it.f25;const qf=q=>q<10?q.toLocaleString("tr-TR",{maximumFractionDigits:1}):Math.floor(q).toLocaleString("tr-TR");
+  $("fact").innerHTML=it.not+(it.cat==="GELİR"?"":" Bir asgari ücret <b>2019'da "+qf(q19)+"</b>, <b>2025'te "+qf(q25)+"</b> "+(q25<10?"tanesini":"tane")+" alıyordu.");
+  $("next").textContent=i===5?"Kartı gör":"Sonraki";
+  setTimeout(()=>$("verdict").classList.add("on"),reduce?0:500);
+  paintProg();
+});
+$("next").addEventListener("click",()=>{i++;if(i<6)show();else finish();});
+function countTo(el,target,ms){if(reduce){el.textContent=fmt(target);return}const t0=performance.now();(function f(t){const k=Math.min(1,(t-t0)/ms),e=1-Math.pow(2,-10*k);el.textContent=fmt(target*e);if(k<1)requestAnimationFrame(f);else el.textContent=fmt(target)})(t0);}
+// ---------- bitiş ----------
+function walletYear(){const rs=results.map(r=>r.ratio).sort((a,b)=>a-b);const med=rs[Math.floor(rs.length/2)];if(med<0.85)return{y:"2018",l:"Sen 2019'a bile gelmedin."};let best=CPI[0];for(const c of CPI){if(Math.abs(Math.log(c[1])-Math.log(med))<Math.abs(Math.log(best[1])-Math.log(med)))best=c}return{y:best[0],l:best[0]==="2019"?"Sen tam 2019'dasın.":best[0]==="2025"?"Sen bugünün fiyatlarını 2019'a taşıdın.":"Sen "+best[0]+"'de kaldın."};}
+function finish(){
+  const avg=Math.round(results.reduce((a,r)=>a+r.dev,0)/6);
+  if(!st.days[key]){st.days[key]={results,avg};if(isToday){const y=new Date(Date.now()-864e5);const yk=dayKey(y);st.streak=(st.last===yk)?st.streak+1:1;st.last=key;st.devs.push(avg);}save();}
+  paintHead();
+  const w=walletYear();$("round").style.display="none";$("prog").style.display="none";
+  $("year").textContent=w.y;$("ylabel").textContent=w.l;$("grid").textContent=results.map(r=>EMO[bucket(r.dev)]).join("");
+  $("stat").innerHTML=`Ortalama sapma <b>%${avg}</b> · Seri <b>${st.streak}</b>${isToday?"":" · arşiv (seriye girmez)"}`;
+  $("end").classList.add("on");
+  window.__end={w,avg};
+}
+function shareText(){const {w,avg}=window.__end;const u=location.origin+location.pathname+"?s="+key;return `ZAM KÂHİNİ #${dayNo} · Cüzdan Yılım: ${w.y}\n${results.map(r=>EMO[bucket(r.dev)]).join("")}\nOrtalama sapma %${avg}\n${u}`;}
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");setTimeout(()=>t.classList.remove("on"),1800)}
+$("share").addEventListener("click",async()=>{const text=shareText();try{if(navigator.share){await navigator.share({text});return}}catch(e){}try{await navigator.clipboard.writeText(text);toast("Kopyalandı — yapıştır ve paylaş")}catch(e){prompt("Kopyala:",text)}});
+// ---------- kart (PNG, 1080×1920) ----------
+async function drawCard(){const c=document.createElement("canvas");c.width=1080;c.height=1920;const x=c.getContext("2d");try{await document.fonts.ready}catch(e){}
+  x.fillStyle="#14121a";x.fillRect(0,0,1080,1920);
+  // gürültü dokusu
+  for(let k=0;k<2400;k++){x.fillStyle=`rgba(255,255,255,${Math.random()*0.05})`;x.fillRect(Math.random()*1080,Math.random()*1920,2,2)}
+  x.fillStyle="#ffb020";x.fillRect(0,0,1080,28);
+  x.fillStyle="#f4efe4";x.font="900 64px 'Big Shoulders Display', Impact, sans-serif";x.fillText("ZAM KÂHİNİ",80,180);
+  x.fillStyle="#a9a3b8";x.font="600 30px Archivo, sans-serif";x.fillText("#"+dayNo+" · "+key.split("-").reverse().join("."),80,230);
+  x.fillStyle="#a9a3b8";x.font="600 34px Archivo, sans-serif";x.fillText("CÜZDAN YILIM",80,560);
+  const {w,avg}=window.__end;
+  x.fillStyle="#ffb020";x.font="900 420px 'Big Shoulders Display', Impact, sans-serif";x.fillText(w.y,60,930);
+  x.fillStyle="#f4efe4";x.font="700 72px 'Big Shoulders Display', Impact, sans-serif";wrap(x,w.l.toUpperCase(),80,1040,920,80);
+  x.font="120px serif";x.fillText(results.map(r=>EMO[bucket(r.dev)]).join(" "),70,1330);
+  x.fillStyle="#a9a3b8";x.font="500 40px 'IBM Plex Mono', monospace";x.fillText("ortalama sapma %"+avg+"  ·  seri "+st.streak,80,1440);
+  x.fillStyle="#26222f";x.fillRect(0,1700,1080,220);x.fillStyle="#ffb020";x.fillRect(0,1700,1080,6);
+  x.fillStyle="#f4efe4";x.font="900 54px 'Big Shoulders Display', Impact, sans-serif";x.fillText("2019'DA KAÇ LİRAYDI?",80,1790);
+  x.fillStyle="#a9a3b8";x.font="500 34px 'IBM Plex Mono', monospace";x.fillText((location.host||"zamkahini")+"  ·  tohum "+key,80,1860);
+  return c;}
+function wrap(x,t,px,py,w,lh){const words=t.split(" ");let line="";for(const wd of words){const test=line?line+" "+wd:wd;if(x.measureText(test).width>w&&line){x.fillText(line,px,py);py+=lh;line=wd}else line=test}x.fillText(line,px,py)}
+$("cardBtn").addEventListener("click",async()=>{const c=await drawCard();const url=c.toDataURL("image/png");$("cardImg").src=url;$("preview").classList.add("on");$("endHint").textContent="Karta uzun basıp kaydedebilirsin. Paylaşım destekleniyorsa dosya olarak da gönderilir.";
+  try{if(navigator.canShare){const blob=await new Promise(r=>c.toBlob(r,"image/png"));const f=new File([blob],"zam-kahini-"+key+".png",{type:"image/png"});if(navigator.canShare({files:[f]}))await navigator.share({files:[f],text:shareText()})}}catch(e){}});
+// ---------- başlat ----------
+if(done){finish();}else show();
+})();
+</script>
+
+</body>
+</html>

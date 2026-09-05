@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#14121a">
+<title>Otobüs</title>
+
+</head>
+<body>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Archivo:wght@400;600&family=IBM+Plex+Mono:wght@500;700&display=swap">
+<style>
+:root{--ink:#14121a;--panel:#1d1a26;--paper:#f4efe4;--signal:#ffb020;--hazard:#ff3d5f;--ok:#5fe3b0;--muted:#a9a3b8;--line:#3a3547;
+--disp:"Big Shoulders Display",Impact,sans-serif;--body:Archivo,Arial,sans-serif;--mono:"IBM Plex Mono",Menlo,monospace}
+*{box-sizing:border-box}html,body{margin:0;background:var(--ink);color:var(--paper);font-family:var(--body);height:100%;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none}
+#stage{position:fixed;inset:0;display:flex;justify-content:center;background:var(--ink)}
+#wrap{position:relative;width:100%;max-width:560px;height:100%}
+canvas{display:block;width:100%;height:100%}
+.hud{position:absolute;left:0;right:0;top:0;padding:10px 14px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
+.brand{font-family:var(--disp);font-weight:900;font-size:22px;letter-spacing:.03em;text-transform:uppercase;color:var(--signal);line-height:1}
+.brand small{display:block;font-family:var(--body);font-weight:600;font-size:10px;letter-spacing:.14em;color:var(--muted);margin-top:3px}
+.timer{font-family:var(--mono);font-weight:700;font-size:44px;line-height:1;font-variant-numeric:tabular-nums;text-align:right}
+.timer small{display:block;font-size:12px;color:var(--muted);font-weight:500;letter-spacing:.1em}
+.combo{position:absolute;right:14px;top:82px;font-family:var(--disp);font-weight:900;font-size:26px;color:var(--signal);opacity:0;transition:.12s;transform:scale(.8)}
+.combo.on{opacity:1;transform:scale(1)}
+.warn{position:absolute;left:0;right:0;top:19%;text-align:center;font-family:var(--disp);font-weight:900;font-size:clamp(44px,14vw,72px);letter-spacing:.04em;color:var(--hazard);text-shadow:0 0 24px rgba(255,61,95,.6);opacity:0;pointer-events:none;transform:scale(.9)}
+.warn.on{opacity:1;transform:scale(1);transition:transform .12s cubic-bezier(.34,1.56,.64,1),opacity .08s}
+.stamina{position:absolute;left:14px;right:14px;bottom:118px;height:8px;background:var(--panel);border:1px solid var(--line)}
+.stamina i{display:block;height:100%;background:var(--ok);width:100%;transition:width .1s linear,background .2s}
+.grab{position:absolute;left:14px;right:14px;bottom:24px;height:82px;background:var(--panel);border:2px solid var(--line);color:var(--paper);font-family:var(--disp);font-weight:900;font-size:30px;letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:12px;cursor:pointer}
+.grab small{font-family:var(--body);font-size:11px;letter-spacing:.12em;color:var(--muted);font-weight:600}
+.grab.on{background:var(--signal);color:var(--ink);border-color:var(--signal)}
+.grab.on small{color:var(--ink)}
+.hint{position:absolute;left:0;right:0;bottom:130px;text-align:center;font-size:13px;color:var(--muted);letter-spacing:.06em;pointer-events:none}
+/* ölüm ekranı */
+.over{position:absolute;inset:0;display:none;flex-direction:column;justify-content:flex-end;padding:16px 14px 20px;gap:10px;background:linear-gradient(180deg,transparent 30%,rgba(20,18,26,.92) 60%)}
+.over.on{display:flex}
+.stamp{align-self:flex-start;background:var(--hazard);color:var(--ink);font-family:var(--disp);font-weight:900;font-size:clamp(28px,9vw,40px);line-height:1;padding:10px 14px;text-transform:uppercase;transform:rotate(-3deg) scale(.6);opacity:0;animation:stamp .26s cubic-bezier(.34,1.56,.64,1) .9s forwards}
+.stamp small{display:block;font-family:var(--body);font-weight:600;font-size:11px;letter-spacing:.16em;margin-bottom:4px}
+@keyframes stamp{to{transform:rotate(-3deg) scale(1);opacity:1}}
+.rows{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;opacity:0;animation:up .3s 1.3s forwards}
+.rows div{background:var(--panel);border:1px solid var(--line);padding:10px}
+.rows .k{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.rows .v{font-family:var(--mono);font-weight:700;font-size:26px;font-variant-numeric:tabular-nums}
+.acts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;opacity:0;animation:up .3s 2.1s forwards}
+button{font-family:var(--disp);font-weight:900;font-size:20px;letter-spacing:.06em;text-transform:uppercase;background:var(--signal);color:var(--ink);border:0;padding:14px 8px;cursor:pointer}
+button.ghost{background:transparent;color:var(--paper);border:1px solid var(--line)}
+button:active{transform:scale(.96)}button:focus-visible{outline:3px solid var(--ok)}
+@keyframes up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.preview{display:none;justify-content:center}.preview.on{display:flex}.preview img{width:46%;border:1px solid var(--line)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ok);color:var(--ink);font-weight:600;padding:10px 16px;opacity:0;transition:.2s;pointer-events:none;font-size:14px;z-index:9}
+.toast.on{opacity:1}
+.replayTag{position:absolute;left:14px;top:120px;font-family:var(--mono);font-size:12px;letter-spacing:.14em;color:var(--hazard);display:none}
+.replayTag.on{display:block}
+.start{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px;background:rgba(20,18,26,.55);text-align:center;padding:24px}
+.start h1{font-family:var(--disp);font-weight:900;font-size:clamp(44px,13vw,68px);line-height:.95;margin:0;text-transform:uppercase;color:var(--paper)}
+.start p{max-width:32ch;color:var(--muted);line-height:1.45;margin:0;font-size:15px}
+.start .route{font-family:var(--mono);font-size:13px;color:var(--signal)}
+@media (prefers-reduced-motion:reduce){.stamp,.rows,.acts{animation:none;opacity:1;transform:rotate(-3deg)}.rows,.acts{transform:none}}
+</style>
+<div id="stage"><div id="wrap">
+<canvas id="c"></canvas>
+<div class="hud"><div class="brand">Otobüs<small id="route">HAT 34 · 05.09.2026</small></div><div class="timer"><span id="timer">0.0</span><small>SANİYE AYAKTA</small></div></div>
+<div class="combo" id="combo">x1</div>
+<div class="warn" id="warn">TUTUN!</div>
+<div class="replayTag" id="rtag">● TEKRAR — dokun geç</div>
+<div class="hint" id="hint">Sürükle: eğil · Bas-tut: tutun (yorar, komboyu sıfırlar)</div>
+<div class="stamina" id="stam"><i></i></div>
+<div class="grab" id="grab">Tutun <small>bas-tut</small></div>
+<div class="start" id="start"><h1>Ani frende<br>kaç saniye<br>dayanırsın?</h1><p>Kalabalık otobüs, tek parmak. Sürükleyerek dengeni tut. Tutamağa tutunmak güvenli ama yorar ve komboyu sıfırlar.</p><div class="route" id="routeInfo"></div><button id="startBtn">Bin</button></div>
+<div class="over" id="over">
+  <div class="stamp" id="stamp"><small>Seni düşüren</small><span id="cause">ANİ FREN</span></div>
+  <div class="rows"><div><div class="k">Saniye</div><div class="v" id="rSec">0</div></div><div><div class="k">Skor</div><div class="v" id="rScore">0</div></div><div><div class="k">Kariyer</div><div class="v" id="rCareer">0</div></div></div>
+  <div class="acts"><button id="again">Tekrar</button><button id="share" class="ghost">Paylaş</button><button id="cardBtn" class="ghost">Kart</button></div>
+  <div class="preview" id="preview"><img id="cardImg" alt="Paylaşım kartı"></div>
+</div>
+</div></div>
+<div class="toast" id="toast"></div>
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const C=$("c"),X=C.getContext("2d");let W=0,H=0,DPR=1;
+function resize(){DPR=Math.min(2,devicePixelRatio||1);const r=C.getBoundingClientRect();W=r.width;H=r.height;C.width=W*DPR;C.height=H*DPR;X.setTransform(DPR,0,0,DPR,0,0);}
+addEventListener("resize",resize);resize();
+// ---------- tohum / hat ----------
+function rng(seed){let s=seed>>>0;return()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
+const pad=n=>String(n).padStart(2,"0");
+const P=new URLSearchParams(location.search);
+let day=new Date();if(P.get("hat")&&/^\d{8}$/.test(P.get("hat"))){const h=P.get("hat");day=new Date(Date.UTC(+h.slice(0,4),+h.slice(4,6)-1,+h.slice(6,8)));}
+const KEY=day.getUTCFullYear()+pad(day.getUTCMonth()+1)+pad(day.getUTCDate());
+const R=rng(parseInt(KEY,10));
+const LINES=["34","500T","15F","E-10","145T","28","99A","19E","76","522"];
+const LINE=LINES[Math.floor(R()*LINES.length)];
+const target=+P.get("hedef")||0;
+$("route").textContent="HAT "+LINE+" · "+KEY.slice(6)+"."+KEY.slice(4,6)+"."+KEY.slice(0,4);
+$("routeInfo").textContent="Günün hattı: "+LINE+(target?" · Rakip: "+target+" sn":"");
+// olay dizisi: tohumdan üretilir, zorluk zamanla artar
+const TYPES=[["ANİ FREN",1],["SERT KALKIŞ",-1],["ÇUKUR",0],["TEYZE DİRSEĞİ",0],["KAPI İZDİHAMI",0],["VİRAJ",1]];
+const EVENTS=[];{let t=3.2;while(t<600){const k=TYPES[Math.floor(R()*TYPES.length)];const ramp=Math.min(1,t/120);EVENTS.push({t,name:k[0],dir:k[1]||(R()<.5?-1:1),str:0.55+ramp*0.75+R()*0.35,ramp});t+=Math.max(1.6,4.2-ramp*2.2+R()*2.4);}}
+// ---------- durum ----------
+const LS="otobus1";let st={};try{st=JSON.parse(localStorage.getItem(LS)||"{}")}catch(e){}st.career=st.career||0;st.best=st.best||{};
+const save=()=>{try{localStorage.setItem(LS,JSON.stringify(st))}catch(e){}};
+const S={mode:"start",t:0,th:0,om:0,lean:0,grab:false,stam:1,busA:0,busV:9,scroll:0,combo:1,score:0,evI:0,warn:null,evActive:null,trauma:0,timeScale:1,hitstop:0,slow:0,cause:"",bounce:0,rag:null,ragT:0,camY:0};
+// ---------- kayıt (replay) ----------
+const RHZ=20,RSEC=5,RN=RHZ*RSEC;const rec=[];let recT=0;
+function snapshot(){return{th:S.th,busA:S.busA,scroll:S.scroll,grab:S.grab,warn:S.warn?S.warn.name:null,rag:S.rag?S.rag.p.map(p=>[p.x,p.y]):null,bounce:S.bounce,t:S.t,score:S.score,combo:S.combo}}
+function record(dt){recT-=dt;if(recT>0)return;recT=1/RHZ;rec.push(snapshot());if(rec.length>RN)rec.shift();}
+// ---------- girdi ----------
+let pDown=false,px0=0,leanRaw=0;
+const wrap=$("wrap");
+wrap.addEventListener("pointerdown",e=>{if(e.target.closest("button,.grab"))return;if(S.mode==="replay"){endReplay();return}if(S.mode!=="play")return;pDown=true;px0=e.clientX;leanRaw=0;});
+wrap.addEventListener("pointermove",e=>{if(!pDown)return;leanRaw=Math.max(-1,Math.min(1,(e.clientX-px0)/90));});
+addEventListener("pointerup",()=>{pDown=false;leanRaw=0;});
+const grabEl=$("grab");
+const setGrab=v=>{if(S.mode!=="play")v=false;S.grab=v&&S.stam>0.02;grabEl.classList.toggle("on",S.grab)};
+grabEl.addEventListener("pointerdown",e=>{e.preventDefault();setGrab(true)});
+addEventListener("pointerup",()=>setGrab(false));addEventListener("pointercancel",()=>setGrab(false));
+addEventListener("keydown",e=>{if(e.code==="Space"){e.preventDefault();setGrab(true)}if(e.key==="ArrowLeft")leanRaw=-1;if(e.key==="ArrowRight")leanRaw=1;if(S.mode==="replay"&&e.key)endReplay()});
+addEventListener("keyup",e=>{if(e.code==="Space")setGrab(false);if(e.key==="ArrowLeft"||e.key==="ArrowRight")leanRaw=0});
+// ---------- fizik ----------
+const G=5.2,L=1.0,FALL=1.05; // hissiyat: gerçek g (9,81) dokunmatikte 0,3 sn tepki ister; 5,2 ile ~0,45 sn
+function step(dt){
+  S.t+=dt;
+  // otobüs ivmesi: olaylar
+  let a=0;const ev=EVENTS[S.evI];
+  if(ev){
+    if(!S.warn&&S.t>=ev.t-0.42){S.warn=ev;showWarn(ev.name)}
+    if(S.t>=ev.t){S.evActive={...ev,end:ev.t+(ev.name==="VİRAJ"?1.6:ev.name==="KAPI İZDİHAMI"?1.2:0.55),survivedFree:!S.grab};S.evI++;S.warn=null;hideWarn();
+      if(ev.name==="ÇUKUR"){S.om+=(R()<.5?-1:1)*ev.str*2.6;S.bounce=1;S.trauma=Math.min(1,S.trauma+.5)}
+      if(ev.name==="TEYZE DİRSEĞİ"){S.om+=ev.dir*ev.str*3.2;S.trauma=Math.min(1,S.trauma+.35)}
+    }
+  }
+  const A=S.evActive;
+  if(A){
+    if(S.t<A.end){
+      if(A.name==="ANİ FREN")a=-A.str*7.5;else if(A.name==="SERT KALKIŞ")a=A.str*5.5;else if(A.name==="VİRAJ")a=A.dir*A.str*3.2*Math.sin((S.t-A.t)/(A.end-A.t)*Math.PI);else if(A.name==="KAPI İZDİHAMI")a=Math.sin((S.t-A.t)*22)*A.str*3.5;
+      if(S.grab)A.survivedFree=false;
+    }else{ // olay bitti, hayattaysan
+      if(A.survivedFree){S.combo=Math.min(8,S.combo+1);S.score+=150*S.combo;pulseCombo()}else{S.combo=1;pulseCombo()}
+      S.evActive=null;
+    }
+  }
+  S.busA=a;S.busV=Math.max(2,Math.min(16,S.busV+a*dt*0.35));S.scroll+=S.busV*dt*60;
+  // ters sarkaç: theta ileri (+x) yönünde; otobüs ileri hızlanırsa yolcu geriye savrulur
+  const ctl=(S.grab?0:S.lean*7.5);
+  const acc=(G/L)*Math.sin(S.th)-(S.busA/L)*Math.cos(S.th)+ctl-2.3*S.om;
+  if(S.grab){S.stam=Math.max(0,S.stam-dt*0.42);S.om+=(-S.th*28-S.om*7)*dt;S.om+=acc*dt*0.15;if(S.stam<=0)setGrab(false)}
+  else{S.stam=Math.min(1,S.stam+dt*0.22);S.om+=acc*dt}
+  S.th+=S.om*dt;
+  S.lean+=(leanRaw-S.lean)*Math.min(1,dt*14);
+  S.score+=dt*10*S.combo;
+  S.bounce*=Math.exp(-dt*6);
+  if(Math.abs(S.th)>FALL)die();
+}
+function die(){S.mode="dying";S.cause=S.evActive?S.evActive.name:(S.warn?S.warn.name:"KENDİ AYAĞIN");S.hitstop=0.12;S.slow=0.3;S.trauma=1;setGrab(false);
+  // ragdoll: mevcut pozdan
+  const g=geom(S.th);const vx=Math.sin(S.th)*S.om*40-S.busA*8,vy=-Math.cos(S.th)*S.om*20;
+  const pts=[g.head,g.neck,g.hip,g.kneeL,g.kneeR,g.footL,g.footR,g.elbL,g.elbR,g.handL,g.handR].map(p=>({x:p.x,y:p.y,ox:p.x-vx*0.016,oy:p.y-vy*0.016}));
+  const idx={head:0,neck:1,hip:2,kL:3,kR:4,fL:5,fR:6,eL:7,eR:8,hL:9,hR:10};
+  const stick=(a,b)=>({a,b,l:Math.hypot(pts[a].x-pts[b].x,pts[a].y-pts[b].y)});
+  const sticks=[stick(0,1),stick(1,2),stick(2,3),stick(2,4),stick(3,5),stick(4,6),stick(1,7),stick(1,8),stick(7,9),stick(8,10),stick(0,2)];
+  S.rag={p:pts,s:sticks};S.ragT=0;
+  st.career+=S.t;if(!st.best[KEY]||S.t>st.best[KEY])st.best[KEY]=S.t;save();
+}
+function ragStep(dt){const r=S.rag;const floor=floorY();for(const p of r.p){const vx=(p.x-p.ox)*0.985,vy=(p.y-p.oy)*0.985;p.ox=p.x;p.oy=p.y;p.x+=vx-S.busA*dt*14;p.y+=vy+900*dt*dt;}
+  for(let k=0;k<4;k++){for(const s of r.s){const a=r.p[s.a],b=r.p[s.b];let dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1,f=(d-s.l)/d*0.5;a.x+=dx*f;a.y+=dy*f;b.x-=dx*f;b.y-=dy*f}
+    for(const p of r.p){if(p.y>floor){p.y=floor;p.x-=(p.x-p.ox)*0.4}if(p.x<30)p.x=30;if(p.x>W-30)p.x=W-30}}}
+// ---------- geometri ----------
+function floorY(){return H*0.56}
+function geom(th){const fx=W*0.5,fy=floorY();const scale=H*0.22;const s=Math.sin(th),c=Math.cos(th);
+  const hip={x:fx+s*scale*0.45,y:fy-c*scale*0.45},neck={x:fx+s*scale*0.85,y:fy-c*scale*0.85},head={x:fx+s*scale*1.0,y:fy-c*scale*1.0};
+  const footL={x:fx-scale*0.12,y:fy},footR={x:fx+scale*0.12,y:fy};
+  const kneeL={x:(footL.x+hip.x)/2-scale*0.03,y:(footL.y+hip.y)/2},kneeR={x:(footR.x+hip.x)/2+scale*0.03,y:(footR.y+hip.y)/2};
+  const rail={x:fx+ s*scale*0.6,y:fy-scale*1.28};
+  let handL,handR,elbL,elbR;
+  if(S.grab){handR={x:W*0.5+scale*0.18,y:fy-scale*1.28};elbR={x:(neck.x+handR.x)/2+scale*0.08,y:(neck.y+handR.y)/2}}
+  else{handR={x:neck.x+scale*0.28+S.lean*scale*0.12,y:neck.y+scale*0.22-Math.abs(S.lean)*scale*0.2};elbR={x:neck.x+scale*0.18,y:neck.y+scale*0.16}}
+  handL={x:neck.x-scale*0.26-S.lean*scale*0.12,y:neck.y+scale*0.24-Math.abs(S.lean)*scale*0.2};elbL={x:neck.x-scale*0.16,y:neck.y+scale*0.16};
+  return{hip,neck,head,footL,footR,kneeL,kneeR,handL,handR,elbL,elbR,rail,scale};}
+// ---------- çizim ----------
+const PAS=[{x:0.14,h:0.9,w:0.11},{x:0.3,h:1.0,w:0.12},{x:0.72,h:0.95,w:0.12},{x:0.88,h:0.86,w:0.1}];
+function draw(frame){
+  const th=frame?frame.th:S.th,busA=frame?frame.busA:S.busA,scroll=frame?frame.scroll:S.scroll,bounce=frame?frame.bounce:S.bounce;
+  const fy=floorY();
+  // trauma sarsıntısı
+  const s=S.trauma*S.trauma;const ox=(Math.random()-.5)*s*18,oy=(Math.random()-.5)*s*18+bounce*10;
+  X.save();X.translate(ox,oy);
+  // duvar ve pencere
+  X.fillStyle="#2a2634";X.fillRect(-20,-20,W+40,H+40);
+  const winTop=fy-H*0.42,winBot=fy-H*0.16;
+  X.fillStyle="#0e1a2b";X.fillRect(-20,winTop,W+40,winBot-winTop);
+  // şehir silueti
+  X.fillStyle="#1c2b44";for(let k=-1;k<12;k++){const bx=((k*90-(scroll*0.6)%90)+W+90)%(W+180)-90;const bh=40+((k*37)%70);X.fillRect(bx,winBot-bh,60,bh);}
+  X.fillStyle="#31456b";for(let k=-1;k<16;k++){const bx=((k*70-(scroll*1.2)%70)+W+70)%(W+140)-70;const bh=20+((k*53)%40);X.fillRect(bx,winBot-bh,44,bh);}
+  // pencere direkleri
+  X.fillStyle="#3a3547";for(let k=0;k<5;k++){X.fillRect(k*(W/4)-6,winTop-6,12,winBot-winTop+12)}
+  X.fillRect(-20,winTop-10,W+40,10);X.fillRect(-20,winBot,W+40,8);
+  // tavan tutamak barı
+  X.strokeStyle="#c9c2b5";X.lineWidth=6;X.beginPath();X.moveTo(-20,fy-H*0.22*1.28);X.lineTo(W+20,fy-H*0.22*1.28);X.stroke();
+  for(let k=0;k<6;k++){const hx=k*(W/5)+W/10;X.strokeStyle="#8f8878";X.lineWidth=4;X.beginPath();X.moveTo(hx,fy-H*0.22*1.28);X.lineTo(hx,fy-H*0.22*1.28+22);X.stroke();X.strokeStyle="#c9c2b5";X.beginPath();X.arc(hx,fy-H*0.22*1.28+34,12,0,Math.PI*2);X.stroke();}
+  // fren lambası / ikaz ışığı
+  if(S.warn||(frame&&frame.warn)){X.fillStyle="rgba(255,61,95,"+(0.25+0.25*Math.sin(performance.now()/60))+")";X.fillRect(-20,-20,W+40,H+40);}
+  // zemin
+  X.fillStyle="#3a3547";X.fillRect(-20,fy,W+40,H);X.fillStyle="#4a4458";for(let k=0;k<8;k++)X.fillRect(k*(W/7)-2,fy,4,H);
+  // yolcular (sway = -busA)
+  const sway=-busA*0.02;
+  for(const p of PAS){const x=p.x*W,h=H*0.22*p.h;X.fillStyle="#17151f";X.save();X.translate(x,fy);X.rotate(sway);X.fillRect(-p.w*W/2,-h,p.w*W,h);X.beginPath();X.arc(0,-h-h*0.12,h*0.11,0,Math.PI*2);X.fill();X.restore();}
+  // oyuncu
+  if(frame?frame.rag:S.rag){const pts=frame?frame.rag.map(a=>({x:a[0],y:a[1]})):S.rag.p;drawBody(pts[0],pts[1],pts[2],pts[3],pts[4],pts[5],pts[6],pts[7],pts[8],pts[9],pts[10],true);}
+  else{const g=geom(th);drawBody(g.head,g.neck,g.hip,g.kneeL,g.kneeR,g.footL,g.footR,g.elbL,g.elbR,g.handL,g.handR,false);}
+  X.restore();
+}
+function drawBody(head,neck,hip,kL,kR,fL,fR,eL,eR,hL,hR,rag){
+  X.lineCap="round";X.lineJoin="round";X.strokeStyle=rag?"#ff3d5f":"#ffb020";X.lineWidth=Math.max(6,H*0.012);
+  const seg=(a,b)=>{X.beginPath();X.moveTo(a.x,a.y);X.lineTo(b.x,b.y);X.stroke()};
+  seg(neck,hip);seg(hip,kL);seg(kL,fL);seg(hip,kR);seg(kR,fR);seg(neck,eL);seg(eL,hL);seg(neck,eR);seg(eR,hR);
+  X.fillStyle=rag?"#ff3d5f":"#ffb020";X.beginPath();X.arc(head.x,head.y,Math.max(9,H*0.02),0,Math.PI*2);X.fill();
+  // yüz: göz
+  X.fillStyle="#14121a";X.fillRect(head.x+2,head.y-3,3,3);
+}
+// ---------- UI ----------
+const warnEl=$("warn"),comboEl=$("combo");
+function showWarn(n){warnEl.textContent=n==="ANİ FREN"?"FREN!":n==="ÇUKUR"?"ÇUKUR!":n==="TEYZE DİRSEĞİ"?"DİRSEK!":n==="KAPI İZDİHAMI"?"KAPI!":n==="VİRAJ"?"VİRAJ!":"TUTUN!";warnEl.classList.add("on")}
+function hideWarn(){warnEl.classList.remove("on")}
+function pulseCombo(){comboEl.textContent="x"+S.combo;comboEl.classList.toggle("on",S.combo>1);comboEl.style.transform="scale(1.3)";setTimeout(()=>comboEl.style.transform="",120)}
+function hud(){$("timer").textContent=S.t.toFixed(1);$("stam").firstElementChild.style.width=(S.stam*100)+"%";$("stam").firstElementChild.style.background=S.stam<0.25?"var(--hazard)":"var(--ok)";}
+// ---------- döngü ----------
+let last=performance.now();
+function loop(now){const raw=Math.min(1/30,(now-last)/1000);last=now;
+  if(S.hitstop>0){S.hitstop-=raw;S.timeScale=0}else if(S.slow>0){S.slow-=raw;S.timeScale=0.25}else S.timeScale=1;
+  const dt=raw*S.timeScale;
+  S.trauma=Math.max(0,S.trauma-raw*1.2);
+  if(S.mode==="play"){step(dt);record(dt);hud();draw();}
+  else if(S.mode==="dying"){S.ragT+=raw;if(dt>0)ragStep(dt);record(dt);draw();if(S.ragT>1.3&&!reduce)startReplay();else if(S.ragT>1.3)showOver();}
+  else if(S.mode==="replay"){replayTick(raw);}
+  else draw();
+  requestAnimationFrame(loop);}
+requestAnimationFrame(loop);
+// ---------- replay ----------
+let rpI=0,rpAcc=0;
+function startReplay(){S.mode="replay";rpI=0;rpAcc=0;$("rtag").classList.add("on");$("hint").style.display="none";}
+function replayTick(raw){if(!rec.length){endReplay();return}const remaining=(rec.length-rpI)/RHZ;const speed=remaining<1?0.35:1;rpAcc+=raw*speed;while(rpAcc>=1/RHZ&&rpI<rec.length-1){rpAcc-=1/RHZ;rpI++}
+  const f=rec[rpI];draw(f);$("timer").textContent=f.t.toFixed(1);
+  if(rpI>=rec.length-1)endReplay();}
+function endReplay(){$("rtag").classList.remove("on");showOver();}
+function showOver(){if(S.mode==="over")return;S.mode="over";draw(rec[rec.length-1]);$("timer").textContent=S.t.toFixed(1);
+  $("cause").textContent=S.cause;$("rSec").textContent=S.t.toFixed(1);$("rScore").textContent=Math.round(S.score).toLocaleString("tr-TR");
+  const c=st.career;$("rCareer").textContent=c<60?Math.round(c)+" sn":c<3600?Math.floor(c/60)+" dk":(c/3600).toFixed(1)+" sa";
+  $("over").classList.add("on");$("grab").style.display="none";$("stam").style.display="none";
+  if(target&&S.t>target)toast("Rakibi geçtin: "+target+" sn");
+}
+// ---------- başlat / tekrar ----------
+function reset(){Object.assign(S,{mode:"play",t:0,th:(R()-.5)*0.04,om:0,lean:0,grab:false,stam:1,busA:0,busV:9,combo:1,score:0,evI:0,warn:null,evActive:null,trauma:0,hitstop:0,slow:0,cause:"",bounce:0,rag:null,ragT:0});rec.length=0;
+  $("over").classList.remove("on");$("preview").classList.remove("on");$("grab").style.display="";$("stam").style.display="";$("hint").style.display="";hideWarn();comboEl.classList.remove("on");last=performance.now();}
+$("startBtn").addEventListener("click",()=>{$("start").style.display="none";reset()});
+$("again").addEventListener("click",reset);
+// ---------- paylaşım ----------
+function shareText(){const u=location.origin+location.pathname+"?hat="+KEY+"&hedef="+Math.floor(S.t);return `OTOBÜS · Hat ${LINE}\n${S.t.toFixed(1)} sn ayakta · x${S.combo} kombo\nSeni düşüren: ${S.cause}\nBeni geç: ${u}`}
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");setTimeout(()=>t.classList.remove("on"),1800)}
+$("share").addEventListener("click",async()=>{const text=shareText();try{if(navigator.share){await navigator.share({text});return}}catch(e){}try{await navigator.clipboard.writeText(text);toast("Kopyalandı — yapıştır ve paylaş")}catch(e){prompt("Kopyala:",text)}});
+async function drawCard(){const c=document.createElement("canvas");c.width=1080;c.height=1920;const x=c.getContext("2d");try{await document.fonts.ready}catch(e){}
+  x.fillStyle="#14121a";x.fillRect(0,0,1080,1920);for(let k=0;k<2400;k++){x.fillStyle=`rgba(255,255,255,${Math.random()*0.05})`;x.fillRect(Math.random()*1080,Math.random()*1920,2,2)}
+  x.fillStyle="#ffb020";x.fillRect(0,0,1080,28);
+  x.fillStyle="#f4efe4";x.font="900 64px 'Big Shoulders Display', Impact, sans-serif";x.fillText("OTOBÜS",80,180);
+  x.fillStyle="#a9a3b8";x.font="600 30px Archivo, sans-serif";x.fillText("HAT "+LINE+" · "+KEY.slice(6)+"."+KEY.slice(4,6)+"."+KEY.slice(0,4),80,230);
+  x.fillStyle="#a9a3b8";x.font="600 34px Archivo, sans-serif";x.fillText("AYAKTA KALDIM",80,520);
+  x.fillStyle="#ffb020";x.font="900 380px 'Big Shoulders Display', Impact, sans-serif";x.fillText(S.t.toFixed(1),60,860);
+  x.fillStyle="#f4efe4";x.font="700 90px 'Big Shoulders Display', Impact, sans-serif";x.fillText("SANİYE · x"+S.combo,80,960);
+  // damga
+  x.save();x.translate(80,1120);x.rotate(-0.05);x.fillStyle="#ff3d5f";x.fillRect(0,0,920,190);x.fillStyle="#14121a";x.font="600 28px Archivo, sans-serif";x.fillText("SENİ DÜŞÜREN",30,55);x.font="900 96px 'Big Shoulders Display', Impact, sans-serif";x.fillText(S.cause,30,150);x.restore();
+  x.fillStyle="#a9a3b8";x.font="500 40px 'IBM Plex Mono', monospace";x.fillText("skor "+Math.round(S.score).toLocaleString("tr-TR"),80,1440);
+  x.fillStyle="#26222f";x.fillRect(0,1700,1080,220);x.fillStyle="#ffb020";x.fillRect(0,1700,1080,6);
+  x.fillStyle="#f4efe4";x.font="900 54px 'Big Shoulders Display', Impact, sans-serif";x.fillText("ANİ FRENDE KAÇ SANİYE DAYANIRSIN?",80,1790);
+  x.fillStyle="#a9a3b8";x.font="500 34px 'IBM Plex Mono', monospace";x.fillText((location.host||"otobus")+"  ·  hat "+KEY+"  ·  hedef "+Math.floor(S.t),80,1860);
+  return c;}
+$("cardBtn").addEventListener("click",async()=>{const c=await drawCard();$("cardImg").src=c.toDataURL("image/png");$("preview").classList.add("on");
+  try{if(navigator.canShare){const blob=await new Promise(r=>c.toBlob(r,"image/png"));const f=new File([blob],"otobus-"+KEY+".png",{type:"image/png"});if(navigator.canShare({files:[f]}))await navigator.share({files:[f],text:shareText()})}}catch(e){}});
+})();
+</script>
+
+</body>
+</html>
